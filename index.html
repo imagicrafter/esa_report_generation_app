@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 2 ESA Report Generation Prototype</title>
+    <script>
+        // Placeholder for Google Sheets functions - defined in main script section below
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: #2c5f2d;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 24px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            padding: 0 20px;
+        }
+        
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        
+        .progress-step::before {
+            content: attr(data-step);
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: #ddd;
+            border-radius: 50%;
+            line-height: 40px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .progress-step.active::before {
+            background: #97bc62;
+            color: white;
+        }
+        
+        .progress-step.completed::before {
+            background: #2c5f2d;
+            color: white;
+        }
+        
+        .progress-step::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: #ddd;
+            z-index: -1;
+        }
+        
+        .progress-step:last-child::after {
+            display: none;
+        }
+        
+        .progress-step.completed::after {
+            background: #2c5f2d;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #2c5f2d;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #2c5f2d;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1e4420;
+        }
+        
+        .btn-secondary {
+            background: #97bc62;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7da050;
+        }
+        
+        .btn-outline {
+            background: white;
+            color: #2c5f2d;
+            border: 2px solid #2c5f2d;
+        }
+        
+        .btn-outline:hover {
+            background: #2c5f2d;
+            color: white;
+        }
+        
+        .output-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #97bc62;
+        }
+        
+        .output-section h3 {
+            color: #2c5f2d;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .scoring-section {
+            background: #fff8e1;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .scoring-section h3 {
+            color: #f57c00;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .score-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .score-item label {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .score-slider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+        }
+        
+        .score-value {
+            min-width: 30px;
+            text-align: center;
+            font-weight: bold;
+            color: #2c5f2d;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        .data-table th {
+            background: #f0f0f0;
+            font-weight: 600;
+        }
+        
+        .data-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .exceedance {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .report-preview {
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.8;
+        }
+        
+        .report-section {
+            margin-bottom: 30px;
+        }
+        
+        .report-section h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .report-section h4 {
+            font-size: 16px;
+            margin: 15px 0 10px 0;
+        }
+        
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2c5f2d;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .file-upload {
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload:hover {
+            border-color: #97bc62;
+            background: #f8f9fa;
+        }
+        
+        .file-upload.dragover {
+            border-color: #2c5f2d;
+            background: #e8f5e8;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Phase 2 ESA Report Generation Prototype</h1>
+            <div class="subtitle">West Earth Sciences - Environmental Reporting Automation</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-step active" data-step="1">
+                <div>Site Information</div>
+            </div>
+            <div class="progress-step" data-step="2">
+                <div>Data Integration</div>
+            </div>
+            <div class="progress-step" data-step="3">
+                <div>Analysis</div>
+            </div>
+            <div class="progress-step" data-step="4">
+                <div>Content Generation</div>
+            </div>
+            <div class="progress-step" data-step="5">
+                <div>Report Assembly</div>
+            </div>
+        </div>
+
+        <!-- Step 1: Site Information -->
+        <div id="step1" class="step-content">
+            <div class="card">
+                <h2>Step 1: Site Information & Context</h2>
+                <div class="input-group">
+                    <label for="siteName">Site Name/Location</label>
+                    <input type="text" id="siteName" value="16-15-057-21W4M" />
+                </div>
+                <div class="input-group">
+                    <label for="uwi">Unique Well Identifier (UWI)</label>
+                    <input type="text" id="uwi" value="100/16-15-057-21W4/0" />
+                </div>
+                <div class="input-group">
+                    <label for="client">Client Name</label>
+                    <input type="text" id="client" value="Conifer Energy Inc." />
+                </div>
+                <div class="input-group">
+                    <label for="landUse">Land Use Category</label>
+                    <select id="landUse">
+                        <option value="natural">Natural Area</option>
+                        <option value="agricultural">Agricultural</option>
+                        <option value="commercial">Commercial/Industrial</option>
+                        <option value="residential">Residential/Parkland</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="soilType">Dominant Soil Type</label>
+                    <select id="soilType">
+                        <option value="coarse">Coarse-grained</option>
+                        <option value="fine">Fine-grained</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="phase1Summary">Phase 1 ESA Summary (APECs identified)</label>
+                    <textarea id="phase1Summary">APEC 1: Well Centre - Salinity, Hydrocarbons, and Metals
+APEC 2: Former DWDA (Unknown Location) - Salinity, Hydrocarbons, and Metals</textarea>
+                </div>
+                
+                <div class="output-section hidden" id="step1Output">
+                    <h3>Generated Site Context</h3>
+                    <div id="siteContextOutput"></div>
+                </div>
+
+                <div class="scoring-section hidden" id="step1Scoring">
+                    <h3>Score Step 1 Output</h3>
+                    <div class="score-grid">
+                        <div class="score-item">
+                            <label>Completeness</label>
+                            <div class="score-slider">
+                                <input type="range" min="0" max="100" value="80" id="step1Score1" />
+                                <span class="score-value">80</span>
+                            </div>
+                        </div>
+                        <div class="score-item">
+                            <label>Accuracy</label>
+                            <div class="score-slider">
+                                <input type="range" min="0" max="100" value="80" id="step1Score2" />
+                                <span class="score-value">80</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="step1Feedback">Feedback/Notes</label>
+                        <textarea id="step1Feedback" placeholder="Enter any specific feedback..."></textarea>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" id="processStep1Btn" onclick="processStep1()">Process Site Information</button>
+                    <button class="btn-outline" onclick="testGoogleSheetsConnection()">Test Sheets Connection</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Data Integration -->
+        <div id="step2" class="step-content hidden">
+            <div class="card">
+                <h2>Step 2: Data Integration</h2>
+                <div class="alert alert-warning">
+                    <strong>Note:</strong> In production, this would accept XML/Excel files from LIMS. For this prototype, enter sample data manually.
+                </div>
+                
+                <div class="input-group">
+                    <label>Field Investigation Summary</label>
+                    <textarea id="fieldSummary" rows="4">27 boreholes advanced to maximum 6.0 mbgs
+Investigation dates: November 29, 2024 and February 26, 2025
+Drilling method: Track-mounted auger
+Contractors: JED Environmental and Ernco Environmental Drilling Inc.</textarea>
+                </div>
+
+                <div class="input-group">
+                    <label>Sample Laboratory Results (Key Exceedances)</label>
+                    <textarea id="labResults" rows="6">BH-05 @ 1.9m: Ethylbenzene = 0.082 mg/kg (exceeds 0.046 mg/kg guideline)
+BH-05 @ 1.9m: PHC F1 = 230 mg/kg (exceeds 210 mg/kg guideline)
+BH-07 @ 2.5m: PHC F2 = 320 mg/kg (exceeds 150 mg/kg guideline)
+BH-12 @ 1.5m: PHC F3 = 1,850 mg/kg (exceeds 1,300 mg/kg guideline)
+BH-26 @ 1.0m: PHC F3 = 1,420 mg/kg (exceeds 1,300 mg/kg guideline)
+BH-05 @ 1.9m: Total Barium = 1,230 mg/kg (exceeds 750 mg/kg, but barite barium below guideline)</textarea>
+                </div>
+
+                <div class="input-group">
+                    <label>Background Soil Conditions</label>
+                    <textarea id="backgroundConditions" rows="3">EC: Good across all depths
+SAR: Good across all depths
+pH: 5.9-8.5
+Arsenic: 17-38.9 mg/kg (natural background)</textarea>
+                </div>
+
+                <div class="output-section hidden" id="step2Output">
+                    <h3>Integrated Data Summary</h3>
+                    <div id="dataIntegrationOutput"></div>
+                </div>
+
+                <div class="scoring-section hidden" id="step2Scoring">
+                    <h3>Score Step 2 Output</h3>
+                    <div class="score-grid">
+                        <div class="score-item">
+                            <label>Data Completeness</label>
+                            <div class="score-slider">
+                                <input type="range" min="0" max="100" value="80" id="step2Score1" />
+                                <span class="score-value">80</span>
+                            </div>
+                        </div>
+                        <div class="score-item">
+                            <label>Integration Quality</label>
+                            <div class="score-slider">
+                                <input type="range" min="0" max="100" value="80" id="step2Score2" />
+                                <span class="score-value">80</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="step2Feedback">Feedback/Notes</label>
+                        <textarea id="step2Feedback" placeholder="Enter any specific feedback..."></textarea>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-outline" onclick="goToStep(1)">Back</button>
+                    <button class="btn-primary" id="processStep2Btn" onclick="processStep2()">Process Data Integration</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Analysis -->
+        <div id="step3" class="step-content hidden">
+            <div class="card">
+                <h2>Step 3: Contamination Analysis</h2>
+                
+                <div class="input-group">
+                    <label>Delineation Assessment</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <label>AEC 1 Delineation</label>
+                            <select id="aec1Delineation">
+                                <option value="partial">Partial</option>
+                                <option value="complete">Complete</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>AEC 2 Delineation</label>
+                            <select id="aec2Delineation">
+                                <option value="partial">Partial</option>
+                                <option value="complete">Complete</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Estimated Impact Volumes</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <label>AEC 1 Volume (m³)</label>
+                            <input type="number" id="aec1Volume" value="255" />
+                        </div>
+                        <div>
+                            <label>AEC 2 Volume (m³)</label>
+                            <input type="number" id="aec2Volume" value="5" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="output-section hidden" id="step3Output">
+                    <h3>Analysis Results</h3>
+                    <div id="analysisOutput"></div>
+                </div>
+
+                <div class="scoring-section hidden" id="step3Scoring">
+                    <h3>Score Step 3 Output</h3>
+                    <div class="score-grid">
+                        <div class="score-item">
+                            <label>Technical Accuracy</label>
+                            <div class="score-slider">
+                                <input type="range" min="0" max="100" value="80" id="step3Score1" />
+                                <span class="score-value">80</span>
+                            </div>
+                        </div>
+                        <div class="score-item">
+                            <label>Regulatory Compliance</label>
+                            <div class="score-slider">
+                                <input type="range" min="0" max="100" value="80" id="step3Score2" />
+                                <span class="score-value">80</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="step3Feedback">Feedback/Notes</label>
+                        <textarea id="step3Feedback" placeholder="Enter any specific feedback..."></textarea>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-outline" onclick="goToStep(2)">Back</button>
+                    <button class="btn-primary" id="processStep3Btn" onclick="processStep3()">Run Analysis</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Content Generation -->
+        <div id="step4" class="step-content hidden">
+            <div class="card">
+                <h2>Step 4: Report Content Generation</h2>
+                
+                <div class="input-group">
+                    <label>Sections to Generate</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <label><input type="checkbox" checked /> Executive Summary</label>
+                        <label><input type="checkbox" checked /> Site Description</label>
+                        <label><input type="checkbox" checked /> Investigation Methods</label>
+                        <label><input type="checkbox" checked /> Results & Discussion</label>
+                        <label><input type="checkbox" checked /> Conclusions</label>
+                        <label><input type="checkbox" checked /> Recommendations</label>
+                    </div>
+                </div>
+
+                <div class="output-section hidden" id="step4Output">
+                    <h3>Generated Content Sections</h3>
+                    <div id="contentOutput"></div>
+                </div>
+
+                <div class="scoring-section hidden" id="step4Scoring">
+                    <h3>Score Step 4 Output</h3>
+                    <div class="score-grid">
+                        <div class="score-item">
+                            <label>Professional Quality</label>
+                            <div class="score-slider">
+                                <input type="range" min="0" max="100" value="80" id="step4Score1" />
+                                <span class="score-value">80</span>
+                            </div>
+                        </div>
+                        <div class="score-item">
+                            <label>Technical Language</label>
+                            <div class="score-slider">
+                                <input type="range" min="0" max="100" value="80" id="step4Score2" />
+                                <span class="score-value">80</span>
+                            </div>
+                        </div>
+                        <div class="score-item">
+                            <label>Completeness</label>
+                            <div class="score-slider">
+                                <input type="range" min="0" max="100" value="80" id="step4Score3" />
+                                <span class="score-value">80</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="step4Feedback">Feedback/Notes</label>
+                        <textarea id="step4Feedback" placeholder="Enter any specific feedback..."></textarea>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-outline" onclick="goToStep(3)">Back</button>
+                    <button class="btn-primary" id="processStep4Btn" onclick="processStep4()">Generate Content</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5: Report Assembly -->
+        <div id="step5" class="step-content hidden">
+            <div class="card">
+                <h2>Step 5: Final Report Assembly</h2>
+                
+                <div class="alert alert-success">
+                    All sections have been generated and are ready for final assembly.
+                </div>
+
+                <div class="output-section" id="step5Output">
+                    <h3>Final Report Preview</h3>
+                    <div class="report-preview" id="finalReportPreview">
+                        <p>Click "Assemble Final Report" to generate the complete Phase 2 ESA report.</p>
+                    </div>
+                </div>
+
+                <div class="scoring-section hidden" id="step5Scoring">
+                    <h3>Score Final Report</h3>
+                    <div class="score-grid">
+                        <div class="score-item">
+                            <label>Overall Quality</label>
+                            <div class="score-slider">
+                                <input type="range" min="0" max="100" value="80" id="step5Score1" />
+                                <span class="score-value">80</span>
+                            </div>
+                        </div>
+                        <div class="score-item">
+                            <label>Client Readiness</label>
+                            <div class="score-slider">
+                                <input type="range" min="0" max="100" value="80" id="step5Score2" />
+                                <span class="score-value">80</span>
+                            </div>
+                        </div>
+                        <div class="score-item">
+                            <label>Regulatory Compliance</label>
+                            <div class="score-slider">
+                                <input type="range" min="0" max="100" value="80" id="step5Score3" />
+                                <span class="score-value">80</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="step5Feedback">Final Feedback/Notes</label>
+                        <textarea id="step5Feedback" placeholder="Enter any specific feedback..."></textarea>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-outline" onclick="goToStep(4)">Back</button>
+                    <button class="btn-primary" onclick="processStep5()">Assemble Final Report</button>
+                    <button class="btn-secondary hidden" id="downloadReport" onclick="downloadFinalReport()">Download Report</button>
+                    <button class="btn-secondary hidden" id="saveToSheets" onclick="saveToGoogleSheets()">Save to Google Sheets</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state management
+        const appState = {
+            currentStep: 1,
+            siteData: {},
+            labData: {},
+            analysisResults: {},
+            generatedContent: {},
+            scores: {},
+            feedback: {}
+        };
+
+        // Track execution ID for Google Sheets
+        let currentExecutionId = null;
+
+        // Get step name for tracking
+        function getStepName(stepNumber) {
+            const stepNames = {
+                1: 'Site Information & Context',
+                2: 'Data Integration',
+                3: 'Contamination Analysis',
+                4: 'Content Generation',
+                5: 'Report Assembly'
+            };
+            return stepNames[stepNumber] || `Step ${stepNumber}`;
+        }
+
+        // AI API Configuration (Secure Backend Proxy)
+        const AI_CONFIG = {
+            // Backend proxy endpoint - API keys secured on server
+            proxyURL: '/api/ai-generate',
+            provider: 'openai' // Change to 'anthropic' if using Claude
+        };
+
+        // AI Helper Functions (Backend Proxy)
+        async function callAI(prompt, systemPrompt = '') {
+            try {
+                const response = await fetch(AI_CONFIG.proxyURL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        systemPrompt: systemPrompt,
+                        provider: AI_CONFIG.provider
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Proxy API error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.message || 'AI generation failed');
+                }
+
+                return data.content;
+
+            } catch (error) {
+                console.error('AI API call failed:', error);
+                return null;
+            }
+        }
+
+        // Show loading indicator during AI generation
+        function showAILoading(stepNumber, show = true) {
+            const outputSection = document.getElementById(`step${stepNumber}Output`);
+            if (!outputSection) return;
+
+            if (show) {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.id = `ai-loading-${stepNumber}`;
+                loadingDiv.innerHTML = `
+                    <div style="display: flex; align-items: center; padding: 20px; background: #f8f9fa; border-radius: 4px;">
+                        <div class="loading"></div>
+                        <span style="margin-left: 10px;">Generating content with AI...</span>
+                    </div>
+                `;
+                outputSection.appendChild(loadingDiv);
+            } else {
+                const loadingDiv = document.getElementById(`ai-loading-${stepNumber}`);
+                if (loadingDiv) {
+                    loadingDiv.remove();
+                }
+            }
+        }
+
+        // Enhanced progress loading indicator with specific messages
+        function showAIProgressLoading(stepNumber, message) {
+            const outputSection = document.getElementById(`step${stepNumber}Output`);
+            if (!outputSection) return;
+
+            // Remove existing loading indicator
+            const existingLoading = document.getElementById(`ai-progress-loading-${stepNumber}`);
+            if (existingLoading) {
+                existingLoading.remove();
+            }
+
+            // Create new progress indicator
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = `ai-progress-loading-${stepNumber}`;
+            loadingDiv.innerHTML = `
+                <div style="display: flex; align-items: center; padding: 20px; background: #e8f5e8; border-radius: 4px; border-left: 4px solid #2c5f2d;">
+                    <div class="loading"></div>
+                    <span style="margin-left: 15px; font-weight: 600; color: #2c5f2d;">${message}</span>
+                </div>
+            `;
+            
+            // Insert at the beginning of the output section
+            if (outputSection.firstChild) {
+                outputSection.insertBefore(loadingDiv, outputSection.firstChild);
+            } else {
+                outputSection.appendChild(loadingDiv);
+            }
+        }
+
+        // Initialize score sliders
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('input', function() {
+                this.nextElementSibling.textContent = this.value;
+            });
+        });
+
+        // Navigation
+        function goToStep(step) {
+            document.querySelectorAll('.step-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`step${step}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.progress-step').forEach((el, index) => {
+                if (index < step - 1) {
+                    el.classList.add('completed');
+                    el.classList.remove('active');
+                } else if (index === step - 1) {
+                    el.classList.add('active');
+                    el.classList.remove('completed');
+                } else {
+                    el.classList.remove('active', 'completed');
+                }
+            });
+            
+            appState.currentStep = step;
+        }
+
+        // Helper function to set button loading state
+        function setButtonLoading(buttonId, loading, originalText) {
+            const button = document.getElementById(buttonId);
+            if (!button) return;
+            
+            if (loading) {
+                button.disabled = true;
+                button.innerHTML = `<div class="loading" style="width: 16px; height: 16px; display: inline-block; margin-right: 8px;"></div>Processing...`;
+            } else {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+
+        // Step 1: Process Site Information
+        async function processStep1() {
+            try {
+                setButtonLoading('processStep1Btn', true, 'Process Site Information');
+                
+                // Create execution ID for tracking this session
+                if (!currentExecutionId) {
+                    currentExecutionId = `EXEC-${Date.now()}`;
+                    console.log('Created new execution ID:', currentExecutionId);
+                }
+            
+            const siteData = {
+                siteName: document.getElementById('siteName').value,
+                uwi: document.getElementById('uwi').value,
+                client: document.getElementById('client').value,
+                landUse: document.getElementById('landUse').value,
+                soilType: document.getElementById('soilType').value,
+                phase1Summary: document.getElementById('phase1Summary').value
+            };
+            
+            appState.siteData = siteData;
+            
+            // Generate site context
+            const siteContext = `
+                <h4>Site Identification</h4>
+                <p><strong>Location:</strong> ${siteData.siteName}</p>
+                <p><strong>UWI:</strong> ${siteData.uwi}</p>
+                <p><strong>Client:</strong> ${siteData.client}</p>
+                
+                <h4>Site Characteristics</h4>
+                <p><strong>Land Use Category:</strong> ${siteData.landUse.charAt(0).toUpperCase() + siteData.landUse.slice(1)} Area</p>
+                <p><strong>Dominant Soil Type:</strong> ${siteData.soilType.charAt(0).toUpperCase() + siteData.soilType.slice(1)}-grained</p>
+                
+                <h4>Areas of Potential Environmental Concern</h4>
+                <pre>${siteData.phase1Summary}</pre>
+                
+                <h4>Regulatory Context</h4>
+                <p>This Phase II ESA will be conducted in accordance with:</p>
+                <ul>
+                    <li>CSA Standard Z769-00 "Phase II Environmental Site Assessment" (2023)</li>
+                    <li>Alberta Environmental Site Assessment Standard (2024)</li>
+                    <li>Alberta Tier 1 Soil and Groundwater Remediation Guidelines</li>
+                </ul>
+            `;
+            
+            document.getElementById('siteContextOutput').innerHTML = siteContext;
+            document.getElementById('step1Output').classList.remove('hidden');
+            document.getElementById('step1Scoring').classList.remove('hidden');
+            
+            // Auto-save to Google Sheets after processing
+            await saveStepToSheets(1, siteContext);
+            
+            } finally {
+                setButtonLoading('processStep1Btn', false, 'Process Site Information');
+            }
+        }
+
+        // Step 2: Process Data Integration
+        async function processStep2() {
+            try {
+                setButtonLoading('processStep2Btn', true, 'Process Data Integration');
+                console.log('processStep2 called');
+                
+                const labData = {
+                    fieldSummary: document.getElementById('fieldSummary').value,
+                    labResults: document.getElementById('labResults').value,
+                    backgroundConditions: document.getElementById('backgroundConditions').value
+                };
+                
+                console.log('Lab data collected:', labData);
+                appState.labData = labData;
+                
+                // Parse lab results for exceedances
+                const exceedances = parseExceedances(labData.labResults);
+                console.log('Exceedances parsed:', exceedances);
+                
+                // Generate integrated data summary
+                const dataIntegration = `
+                    <h4>Field Investigation Overview</h4>
+                    <pre>${labData.fieldSummary}</pre>
+                    
+                    <h4>Exceedance Summary</h4>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Location</th>
+                                <th>Depth (m)</th>
+                                <th>Parameter</th>
+                                <th>Result (mg/kg)</th>
+                                <th>Guideline (mg/kg)</th>
+                                <th>Exceedance Factor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${exceedances.map(exc => `
+                                <tr>
+                                    <td>${exc.location}</td>
+                                    <td>${exc.depth}</td>
+                                    <td>${exc.parameter}</td>
+                                    <td class="exceedance">${exc.result}</td>
+                                    <td>${exc.guideline}</td>
+                                    <td class="exceedance">${exc.factor}x</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    
+                    <h4>Background Conditions</h4>
+                    <pre>${labData.backgroundConditions}</pre>
+                    
+                    <div class="alert alert-warning">
+                        <strong>Data Quality Note:</strong> Laboratory QA/QC procedures validated. All analytical methods meet CCME requirements.
+                    </div>
+                `;
+                
+                console.log('Data integration content generated');
+                
+                document.getElementById('dataIntegrationOutput').innerHTML = dataIntegration;
+                document.getElementById('step2Output').classList.remove('hidden');
+                document.getElementById('step2Scoring').classList.remove('hidden');
+                
+                console.log('UI updated, now saving to sheets');
+                
+                // Auto-save to Google Sheets after processing
+                await saveStepToSheets(2, dataIntegration);
+                
+                console.log('processStep2 completed successfully');
+                
+            } catch (error) {
+                console.error('Error in processStep2:', error);
+                alert('Error processing Step 2: ' + error.message);
+            } finally {
+                setButtonLoading('processStep2Btn', false, 'Process Data Integration');
+            }
+        }
+
+        // Parse exceedances from lab results
+        function parseExceedances(labResults) {
+            const lines = labResults.split('\n');
+            const exceedances = [];
+            
+            lines.forEach(line => {
+                const match = line.match(/(\w+-\d+)\s*@\s*([\d.]+)m:\s*(.+?)\s*=\s*([\d,]+)\s*mg\/kg\s*\(exceeds\s*([\d,]+)\s*mg\/kg/);
+                if (match) {
+                    const result = parseFloat(match[4].replace(',', ''));
+                    const guideline = parseFloat(match[5].replace(',', ''));
+                    exceedances.push({
+                        location: match[1],
+                        depth: match[2],
+                        parameter: match[3],
+                        result: result,
+                        guideline: guideline,
+                        factor: (result / guideline).toFixed(2)
+                    });
+                }
+            });
+            
+            return exceedances;
+        }
+
+        // Step 3: Process Analysis
+        async function processStep3() {
+            try {
+                setButtonLoading('processStep3Btn', true, 'Run Analysis');
+                console.log('processStep3 called');
+                
+                const analysisData = {
+                    aec1Delineation: document.getElementById('aec1Delineation').value,
+                    aec2Delineation: document.getElementById('aec2Delineation').value,
+                    aec1Volume: document.getElementById('aec1Volume').value,
+                    aec2Volume: document.getElementById('aec2Volume').value
+                };
+                
+                console.log('Analysis data collected:', analysisData);
+                appState.analysisResults = analysisData;
+                
+                // Generate analysis results
+                const analysisOutput = `
+                    <h4>Areas of Environmental Concern (AECs)</h4>
+                    
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>AEC</th>
+                                <th>Description</th>
+                                <th>Contaminants</th>
+                                <th>Vertical Extent</th>
+                                <th>Area (m²)</th>
+                                <th>Volume (m³)</th>
+                                <th>Delineation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>AEC 1</td>
+                                <td>Suspected former DWDA ~10m SW of well centre</td>
+                                <td>Ethylbenzene, PHC F1-F3</td>
+                                <td>1.0 - 2.5 mbgs</td>
+                                <td>170</td>
+                                <td>${analysisData.aec1Volume}</td>
+                                <td><span class="exceedance">${analysisData.aec1Delineation.toUpperCase()}</span></td>
+                            </tr>
+                            <tr>
+                                <td>AEC 2</td>
+                                <td>Localized PHC F3 impact near BH-26</td>
+                                <td>PHC F3</td>
+                                <td>1.0 - 1.5 mbgs</td>
+                                <td>10</td>
+                                <td>${analysisData.aec2Volume}</td>
+                                <td><span class="exceedance">${analysisData.aec2Delineation.toUpperCase()}</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h4>Risk Assessment Summary</h4>
+                    <ul>
+                        <li><strong>Human Health Risk:</strong> Low - Natural area land use with limited access</li>
+                        <li><strong>Ecological Risk:</strong> Moderate - Potential impact to soil dwelling organisms</li>
+                        <li><strong>Groundwater Risk:</strong> Low - No groundwater impacts detected</li>
+                        <li><strong>Off-site Migration:</strong> None detected</li>
+                    </ul>
+                    
+                    <h4>Contamination Summary</h4>
+                    <div class="alert alert-danger">
+                        <strong>Total Impacted Area:</strong> 180 m²<br>
+                        <strong>Total Impacted Volume:</strong> ${parseInt(analysisData.aec1Volume) + parseInt(analysisData.aec2Volume)} m³<br>
+                        <strong>Primary Contaminants:</strong> Petroleum hydrocarbons (F1-F3), Ethylbenzene
+                    </div>
+                `;
+                
+                console.log('Analysis output generated');
+                
+                document.getElementById('analysisOutput').innerHTML = analysisOutput;
+                document.getElementById('step3Output').classList.remove('hidden');
+                document.getElementById('step3Scoring').classList.remove('hidden');
+                
+                console.log('UI updated, now saving to sheets');
+                
+                // Auto-save to Google Sheets after processing
+                await saveStepToSheets(3, analysisOutput);
+                
+                console.log('processStep3 completed successfully');
+                
+            } catch (error) {
+                console.error('Error in processStep3:', error);
+                alert('Error processing Step 3: ' + error.message);
+            } finally {
+                setButtonLoading('processStep3Btn', false, 'Run Analysis');
+            }
+        }
+
+        // Step 4: Generate Content
+        async function processStep4() {
+            try {
+                setButtonLoading('processStep4Btn', true, 'Generate Content');
+                console.log('processStep4 called');
+                
+                // Show initial loading indicator
+                showAIProgressLoading(4, 'Initializing AI content generation...');
+                document.getElementById('step4Output').classList.remove('hidden');
+                
+                // Generate content sections with AI (await each one with progress updates)
+                const sections = {};
+                
+                showAIProgressLoading(4, 'Generating Executive Summary... (1/6)');
+                sections.executiveSummary = await generateExecutiveSummary();
+                
+                showAIProgressLoading(4, 'Generating Site Description... (2/6)');
+                sections.siteDescription = await generateSiteDescription();
+                
+                showAIProgressLoading(4, 'Generating Methodology... (3/6)');
+                sections.methodology = await generateMethodology();
+                
+                showAIProgressLoading(4, 'Generating Results... (4/6)');
+                sections.results = await generateResults();
+                
+                showAIProgressLoading(4, 'Generating Conclusions... (5/6)');
+                sections.conclusions = await generateConclusions();
+                
+                showAIProgressLoading(4, 'Generating Recommendations... (6/6)');
+                sections.recommendations = await generateRecommendations();
+                
+                showAIProgressLoading(4, 'Finalizing content...');
+                
+                appState.generatedContent = sections;
+                
+                // Display generated content
+                const contentOutput = `
+                    <div class="report-section">
+                        <h4>Executive Summary</h4>
+                        <div style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                            ${sections.executiveSummary}
+                        </div>
+                    </div>
+                    
+                    <div class="report-section">
+                        <h4>Site Description</h4>
+                        <div style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                            ${sections.siteDescription}
+                        </div>
+                    </div>
+                    
+                    <div class="report-section">
+                        <h4>Conclusions</h4>
+                        <div style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                            ${sections.conclusions}
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <strong>Content Generation Complete:</strong> All sections have been generated and are ready for final assembly.
+                    </div>
+                `;
+                
+                document.getElementById('contentOutput').innerHTML = contentOutput;
+                document.getElementById('step4Scoring').classList.remove('hidden');
+                
+                // Auto-save to Google Sheets after processing
+                await saveStepToSheets(4, contentOutput);
+                
+                console.log('processStep4 completed successfully');
+                
+            } catch (error) {
+                console.error('Error in processStep4:', error);
+                // Show error message
+                const errorOutput = `
+                    <div class="alert alert-danger">
+                        <strong>Error:</strong> Content generation failed. Using fallback content. 
+                        <br><small>Check console for details or ensure AI service is configured.</small>
+                    </div>
+                `;
+                document.getElementById('contentOutput').innerHTML = errorOutput;
+                document.getElementById('step4Output').classList.remove('hidden');
+                document.getElementById('step4Scoring').classList.remove('hidden');
+            } finally {
+                setButtonLoading('processStep4Btn', false, 'Generate Content');
+            }
+        }
+
+        // Query Google Sheets for feedback patterns (future implementation)
+        async function queryFeedbackData(sectionType, siteContext) {
+            // This would query your Google Sheets API to find:
+            // 1. Similar site contexts (land use, soil type, etc.)
+            // 2. High-scoring content for this section type
+            // 3. Common feedback patterns
+            // 4. Low-scoring content to avoid
+            
+            // For now, return simulated data
+            // In production, this would make an API call to Google Sheets
+            return {
+                averageScore: 82,
+                commonIssues: ["Missing regulatory details", "Unclear volume calculations"],
+                bestPractices: ["Include specific guidelines", "Use professional terminology"],
+                similarSites: 5
+            };
+        }
+
+        // Get feedback-enhanced prompts based on historical data
+        async function getFeedbackEnhancedPrompt(sectionType, basePrompt, systemPrompt) {
+            try {
+                // Query actual feedback data from Google Sheets
+                const feedbackData = await queryFeedbackData(sectionType, appState.siteData);
+                console.log('Feedback data retrieved:', feedbackData);
+                
+                // Use real feedback if available, otherwise fall back to static enhancements
+                if (feedbackData.commonIssues && feedbackData.bestPractices) {
+                    const enhancedPrompt = basePrompt + `\n\nFEEDBACK-BASED IMPROVEMENTS (based on ${feedbackData.similarSites} similar sites, avg score: ${feedbackData.averageScore}):
+- Common issues to avoid: ${feedbackData.commonIssues.join('; ')}
+- Best practices to follow: ${feedbackData.bestPractices.join('; ')}
+- Ensure regulatory compliance language is prominent
+- Use professional environmental consulting terminology`;
+                    
+                    return enhancedPrompt;
+                }
+            } catch (error) {
+                console.log('Using static feedback enhancement due to error:', error);
+            }
+            
+            // Static feedback enhancement as fallback
+            const feedbackEnhancements = {
+                executiveSummary: {
+                    commonIssues: [
+                        "Include more specific regulatory compliance statements",
+                        "Mention the consulting firm's credentials more prominently", 
+                        "Use more precise technical language for contamination volumes"
+                    ],
+                    highScoringPatterns: [
+                        "Start with clear client and timeline information",
+                        "Use bullet points for AEC summaries",
+                        "Include total impact calculations"
+                    ]
+                },
+                siteDescription: {
+                    commonIssues: [
+                        "Add more detail about surrounding land use",
+                        "Include topographical information",
+                        "Mention proximity to sensitive receptors"
+                    ],
+                    highScoringPatterns: [
+                        "Include latitude/longitude coordinates",
+                        "Describe conceptual site model clearly",
+                        "Reference applicable guidelines early"
+                    ]
+                }
+            };
+
+            const enhancement = feedbackEnhancements[sectionType];
+            if (enhancement) {
+                const enhancedPrompt = basePrompt + `\n\nIMPORTANT FEEDBACK-BASED REQUIREMENTS:
+- Address these common issues: ${enhancement.commonIssues.join('; ')}
+- Follow these high-scoring patterns: ${enhancement.highScoringPatterns.join('; ')}
+- Ensure regulatory compliance language is prominent
+- Use professional environmental consulting terminology`;
+                
+                return enhancedPrompt;
+            }
+            
+            return basePrompt;
+        }
+
+        // Content generation functions (AI-powered)
+        async function generateExecutiveSummary() {
+            // Static fallback content
+            const staticContent = `
+                <p>On behalf of ${appState.siteData.client}, West Earth Sciences Ltd. (West) completed a Phase II Environmental Site Assessment (ESA) at the surface location ${appState.siteData.siteName} related to the well ${appState.siteData.uwi} (the Site) between November 29, 2024 and February 26, 2025. The Site is situated on ${appState.siteData.landUse} land in Sturgeon County, Alberta.</p>
+                
+                <p>The purpose of the Phase II ESA was to investigate and characterize Areas of Potential Environmental Concern (APECs) identified in the West 2024 Phase I ESA completed for the Site.</p>
+                
+                <p>In total, twenty-seven boreholes were advanced to a maximum investigation depth of 6.0 mbgs (metres below ground surface) to characterize soil quality in the APECs.</p>
+                
+                <p>The results of the Phase II ESA identified the following Areas of Environmental Concern (AEC):</p>
+                <ul>
+                    <li><strong>AEC 1:</strong> Suspected former DWDA approximately 10 m southwest of the Well center - Ethylbenzene and PHC F1 to F3 impacts, estimated volume ${appState.analysisResults.aec1Volume} m³</li>
+                    <li><strong>AEC 2:</strong> Localized area of PHC F3 impact near borehole 25-BH26 - PHC F3 impacts, estimated volume ${appState.analysisResults.aec2Volume} m³</li>
+                </ul>
+                
+                <p>Complete delineation was not achieved. The total PHC-impacted area is estimated at 180 m² with an impacted soil volume of approximately ${parseInt(appState.analysisResults.aec1Volume) + parseInt(appState.analysisResults.aec2Volume)} m³.</p>
+            `;
+
+            // Enhanced AI generation with feedback
+            const systemPrompt = `You are an expert environmental consultant writing Phase II Environmental Site Assessment reports. Generate professional, technically accurate content following Alberta Environmental Site Assessment Standards and CSA Z769-00 guidelines. Use proper environmental consulting language and format as HTML paragraphs and lists.`;
+            
+            const baseUserPrompt = `Generate an executive summary for a Phase II ESA report with the following details:
+
+Site Information:
+- Client: ${appState.siteData.client}
+- Site Name: ${appState.siteData.siteName}
+- UWI: ${appState.siteData.uwi}
+- Land Use: ${appState.siteData.landUse}
+- Investigation Period: November 29, 2024 and February 26, 2025
+
+Investigation Details:
+- 27 boreholes advanced to maximum 6.0 mbgs
+- Investigating APECs identified in Phase I ESA
+
+Results:
+- AEC 1: Former DWDA area with Ethylbenzene and PHC F1-F3 impacts, volume ${appState.analysisResults.aec1Volume} m³
+- AEC 2: Localized PHC F3 impact, volume ${appState.analysisResults.aec2Volume} m³
+- Total impacted area: 180 m²
+- Total impacted volume: ${parseInt(appState.analysisResults.aec1Volume) + parseInt(appState.analysisResults.aec2Volume)} m³
+- Partial delineation achieved
+
+Format as HTML with proper paragraphs and lists. Be concise but comprehensive.`;
+
+            try {
+                // Get feedback-enhanced prompt
+                const enhancedPrompt = await getFeedbackEnhancedPrompt('executiveSummary', baseUserPrompt, systemPrompt);
+                
+                const aiContent = await callAI(enhancedPrompt, systemPrompt);
+                if (aiContent) {
+                    console.log('Executive summary generated with AI and feedback enhancement');
+                    return aiContent;
+                }
+            } catch (error) {
+                console.error('AI generation failed for executive summary:', error);
+            }
+
+            // Fallback to static content
+            console.log('Using static executive summary');
+            return staticContent;
+        }
+
+        async function generateSiteDescription() {
+            const staticContent = `
+                <h5>Site Information</h5>
+                <p>License number and status: B0002714 (abandoned)<br>
+                Surface location: ${appState.siteData.siteName}<br>
+                UWI: ${appState.siteData.uwi}<br>
+                Latitude, longitude: 53.932641, -113.028646<br>
+                Municipal district: Sturgeon County, Alberta</p>
+                
+                <h5>Site Characteristics</h5>
+                <p>The Site is located on ${appState.siteData.landUse} land with ${appState.siteData.soilType}-grained soils as the dominant soil type. Topography slopes to the southwest. The Redwater River lies approximately 150 m southwest of the Site.</p>
+                
+                <h5>Conceptual Site Model</h5>
+                <p>Based on the Phase I ESA findings and site characteristics, the conceptual site model includes potential contamination sources from historical oil and gas operations, with petroleum hydrocarbons and associated compounds as the primary contaminants of concern.</p>
+            `;
+
+            const systemPrompt = `You are writing a Site Description section for a Phase II ESA report. Include site information, characteristics, and conceptual site model. Format as HTML.`;
+            
+            const userPrompt = `Write a site description section for:
+- Site: ${appState.siteData.siteName}
+- UWI: ${appState.siteData.uwi}  
+- Land use: ${appState.siteData.landUse}
+- Soil type: ${appState.siteData.soilType}-grained
+- Location: Sturgeon County, Alberta
+- License: B0002714 (abandoned)
+Include site characteristics and conceptual site model.`;
+
+            try {
+                const aiContent = await callAI(userPrompt, systemPrompt);
+                return aiContent || staticContent;
+            } catch (error) {
+                return staticContent;
+            }
+        }
+
+        // Helper function for AI content generation with fallback
+        async function generateAIContent(sectionType, staticContent, systemPrompt, userPrompt) {
+            try {
+                const aiContent = await callAI(userPrompt, systemPrompt);
+                if (aiContent) {
+                    console.log(`${sectionType} generated with AI`);
+                    return aiContent;
+                }
+            } catch (error) {
+                console.error(`AI generation failed for ${sectionType}:`, error);
+            }
+            console.log(`Using static ${sectionType}`);
+            return staticContent;
+        }
+
+        async function generateMethodology() {
+            const staticContent = `
+                <p>The Phase II ESA was conducted in accordance with CSA Standard Z769-00 and the Alberta Environmental Site Assessment Standard (2024).</p>
+                
+                <h5>Field Investigation</h5>
+                <p>Borehole drilling activities were completed using track-mounted auger drilling rigs. Twenty-seven boreholes were advanced to a maximum depth of 6.0 mbgs. Soil samples were collected at predetermined depth intervals and screened for visual and olfactory evidence of impacts.</p>
+                
+                <h5>Laboratory Analysis</h5>
+                <p>Select soil samples were submitted to Element Materials Technology for analysis of BTEX, PHC F1-F4, salinity, and metal parameters. All analyses followed CCME protocols.</p>
+            `;
+
+            return await generateAIContent(
+                'methodology',
+                staticContent,
+                'Write methodology section for Phase II ESA following CSA Z769-00 standards.',
+                'Write methodology section covering field investigation (27 boreholes to 6.0 mbgs, track-mounted auger) and laboratory analysis (BTEX, PHC F1-F4, salinity, metals at Element Materials Technology).'
+            );
+        }
+
+        async function generateResults() {
+            const staticContent = `
+                <p>The analytical results identified exceedances of the applicable guidelines for petroleum hydrocarbons and ethylbenzene at multiple locations. The primary areas of impact were identified as:</p>
+                
+                <ul>
+                    <li>AEC 1: Former drilling waste disposal area with PHC F1-F3 and ethylbenzene impacts</li>
+                    <li>AEC 2: Localized PHC F3 impact in the southwest corner of the Site</li>
+                </ul>
+                
+                <p>Background soil conditions were determined to be within acceptable ranges for all parameters except naturally elevated arsenic levels.</p>
+            `;
+
+            return await generateAIContent(
+                'results',
+                staticContent,
+                'Write results section for Phase II ESA with contamination findings.',
+                'Summarize results: AEC 1 (former DWDA with PHC F1-F3, ethylbenzene), AEC 2 (localized PHC F3), background conditions good except natural arsenic.'
+            );
+        }
+
+        async function generateConclusions() {
+            const staticContent = `
+                <p>The Phase II ESA successfully investigated the APECs identified in the Phase I ESA. Two areas of environmental concern were identified with petroleum hydrocarbon impacts exceeding the applicable guidelines.</p>
+                
+                <p>Key findings include:</p>
+                <ul>
+                    <li>Total impacted area of approximately 180 m²</li>
+                    <li>Estimated impacted soil volume of ${parseInt(appState.analysisResults.aec1Volume) + parseInt(appState.analysisResults.aec2Volume)} m³</li>
+                    <li>Partial delineation achieved for both AECs</li>
+                    <li>No groundwater impacts detected</li>
+                    <li>No off-site migration identified</li>
+                </ul>
+                
+                <p>The barium exceedance at BH-05 was determined to be barite barium and does not pose a risk to receptors.</p>
+            `;
+
+            return await generateAIContent(
+                'conclusions',
+                staticContent,
+                'Write conclusions for Phase II ESA report.',
+                `Conclude investigation of 2 AECs: 180 m² impacted area, ${parseInt(appState.analysisResults.aec1Volume) + parseInt(appState.analysisResults.aec2Volume)} m³ volume, partial delineation, no groundwater impacts, barite barium at BH-05.`
+            );
+        }
+
+        async function generateRecommendations() {
+            const staticContent = `
+                <p>Based on the findings of this Phase II ESA, West recommends:</p>
+                
+                <ol>
+                    <li>Complete delineation of AEC 1 and AEC 2 through additional step-out boreholes</li>
+                    <li>Develop a Remedial Action Plan for the excavation and disposal of impacted soils</li>
+                    <li>Consider risk management options if complete remediation is not feasible</li>
+                    <li>Conduct confirmatory sampling following any remediation activities</li>
+                </ol>
+                
+                <p>The recommended next steps should be completed in consultation with the Alberta Energy Regulator and in accordance with applicable guidelines.</p>
+            `;
+
+            return await generateAIContent(
+                'recommendations',
+                staticContent,
+                'Write recommendations for Phase II ESA report.',
+                'Recommend: complete delineation, develop remedial action plan, consider risk management, conduct confirmatory sampling, consult Alberta Energy Regulator.'
+            );
+        }
+
+        // Step 5: Assemble Final Report
+        function processStep5() {
+            const finalReport = assembleFinalReport();
+            
+            document.getElementById('finalReportPreview').innerHTML = finalReport;
+            document.getElementById('step5Scoring').classList.remove('hidden');
+            document.getElementById('downloadReport').classList.remove('hidden');
+            document.getElementById('saveToSheets').classList.remove('hidden');
+            
+            // Save scores
+            saveScores();
+        }
+
+        function assembleFinalReport() {
+            const report = `
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <h1 style="font-size: 24px; margin-bottom: 10px;">Phase II Environmental Site Assessment</h1>
+                    <p style="font-size: 18px; margin-bottom: 5px;">Location: ${appState.siteData.siteName}</p>
+                    <p style="font-size: 16px; margin-bottom: 5px;">UWI: ${appState.siteData.uwi}</p>
+                    <p style="font-size: 16px; margin-bottom: 20px;">Client: ${appState.siteData.client}</p>
+                    <p style="font-size: 14px;">Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+                
+                <div class="report-section">
+                    <h3>EXECUTIVE SUMMARY</h3>
+                    ${appState.generatedContent.executiveSummary}
+                </div>
+                
+                <div class="report-section">
+                    <h3>1. INTRODUCTION</h3>
+                    <h4>1.1 Project Objective</h4>
+                    <p>The purpose of the Phase II ESA was to investigate and characterize Areas of Potential Environmental Concern (APECs) identified in the West 2024 Phase I ESA completed for the Site.</p>
+                    
+                    <h4>1.2 Scope of Work</h4>
+                    ${appState.generatedContent.methodology}
+                </div>
+                
+                <div class="report-section">
+                    <h3>2. SITE DESCRIPTION AND CONCEPTUAL SITE MODEL</h3>
+                    ${appState.generatedContent.siteDescription}
+                </div>
+                
+                <div class="report-section">
+                    <h3>3. SITE INVESTIGATION</h3>
+                    <h4>3.1 Field Investigation</h4>
+                    <pre>${appState.labData.fieldSummary}</pre>
+                    
+                    <h4>3.2 Laboratory Analysis</h4>
+                    <p>Soil samples were analyzed for BTEX, PHC F1-F4, salinity, and metals. All analyses were conducted by Element Materials Technology.</p>
+                </div>
+                
+                <div class="report-section">
+                    <h3>4. REGULATORY CONTEXT AND APPLICABLE GUIDELINES</h3>
+                    <p>The analytical results were compared to the Alberta Tier 1 Soil and Groundwater Remediation Guidelines for ${appState.siteData.landUse} land use and ${appState.siteData.soilType}-grained soil.</p>
+                </div>
+                
+                <div class="report-section">
+                    <h3>5. RESULTS</h3>
+                    ${appState.generatedContent.results}
+                </div>
+                
+                <div class="report-section">
+                    <h3>6. CONCLUSIONS</h3>
+                    ${appState.generatedContent.conclusions}
+                </div>
+                
+                <div class="report-section">
+                    <h3>7. RECOMMENDATIONS</h3>
+                    ${appState.generatedContent.recommendations}
+                </div>
+                
+                <div class="report-section">
+                    <h3>8. CLOSURE</h3>
+                    <p>We trust that the foregoing information is satisfactory for your requirements. Should there be any questions, please do not hesitate to contact the undersigned.</p>
+                    
+                    <p style="margin-top: 40px;">
+                    _____________________________<br>
+                    Professional Name, P.Eng.<br>
+                    West Earth Sciences Ltd.<br>
+                    Date: ${new Date().toLocaleDateString()}
+                    </p>
+                </div>
+            `;
+            
+            return report;
+        }
+
+        // Save scores for each step
+        function saveScores() {
+            appState.scores = {
+                step1: {
+                    completeness: document.getElementById('step1Score1').value,
+                    accuracy: document.getElementById('step1Score2').value,
+                    feedback: document.getElementById('step1Feedback').value
+                },
+                step2: {
+                    dataCompleteness: document.getElementById('step2Score1').value,
+                    integrationQuality: document.getElementById('step2Score2').value,
+                    feedback: document.getElementById('step2Feedback').value
+                },
+                step3: {
+                    technicalAccuracy: document.getElementById('step3Score1').value,
+                    regulatoryCompliance: document.getElementById('step3Score2').value,
+                    feedback: document.getElementById('step3Feedback').value
+                },
+                step4: {
+                    professionalQuality: document.getElementById('step4Score1').value,
+                    technicalLanguage: document.getElementById('step4Score2').value,
+                    completeness: document.getElementById('step4Score3').value,
+                    feedback: document.getElementById('step4Feedback').value
+                },
+                step5: {
+                    overallQuality: document.getElementById('step5Score1').value,
+                    clientReadiness: document.getElementById('step5Score2').value,
+                    regulatoryCompliance: document.getElementById('step5Score3').value,
+                    feedback: document.getElementById('step5Feedback').value
+                }
+            };
+        }
+
+        // Download final report
+        function downloadFinalReport() {
+            const reportContent = document.getElementById('finalReportPreview').innerHTML;
+            const fullHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Phase 2 ESA Report - ${appState.siteData.siteName}</title>
+                    <style>
+                        body { font-family: 'Times New Roman', serif; line-height: 1.8; margin: 40px; }
+                        h1, h2, h3, h4 { margin: 20px 0 10px 0; }
+                        .report-section { margin-bottom: 30px; page-break-inside: avoid; }
+                        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f0f0f0; }
+                    </style>
+                </head>
+                <body>
+                    ${reportContent}
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([fullHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Phase2_ESA_${appState.siteData.siteName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Google Apps Script Web App URL - REPLACE WITH YOUR DEPLOYED URL
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyx7M6B1bsFAphGftxRL3TBYLGipcYO-bQrN0hz7UYKzE14lgzqKpYseXvCMXzs6TRS/exec';
+        
+        // Helper function to strip HTML tags and get clean text
+        function stripHTMLTags(html) {
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            return temp.textContent || temp.innerText || '';
+        }
+
+        // Save individual step outputs to Google Sheets (Structured JSON for AI)
+        async function saveStepToSheets(stepNumber, outputContent) {
+            // Get scores for this step
+            let scores = {};
+            let feedback = '';
+            
+            switch(stepNumber) {
+                case 1:
+                    scores = {
+                        completeness: parseInt(document.getElementById('step1Score1').value),
+                        accuracy: parseInt(document.getElementById('step1Score2').value)
+                    };
+                    feedback = document.getElementById('step1Feedback').value;
+                    break;
+                case 2:
+                    scores = {
+                        dataCompleteness: parseInt(document.getElementById('step2Score1').value),
+                        integrationQuality: parseInt(document.getElementById('step2Score2').value)
+                    };
+                    feedback = document.getElementById('step2Feedback').value;
+                    break;
+                case 3:
+                    scores = {
+                        technicalAccuracy: parseInt(document.getElementById('step3Score1').value),
+                        regulatoryCompliance: parseInt(document.getElementById('step3Score2').value)
+                    };
+                    feedback = document.getElementById('step3Feedback').value;
+                    break;
+                case 4:
+                    scores = {
+                        professionalQuality: parseInt(document.getElementById('step4Score1').value),
+                        technicalLanguage: parseInt(document.getElementById('step4Score2').value),
+                        completeness: parseInt(document.getElementById('step4Score3').value)
+                    };
+                    feedback = document.getElementById('step4Feedback').value;
+                    break;
+                case 5:
+                    scores = {
+                        overallQuality: parseInt(document.getElementById('step5Score1').value),
+                        clientReadiness: parseInt(document.getElementById('step5Score2').value),
+                        regulatoryCompliance: parseInt(document.getElementById('step5Score3').value)
+                    };
+                    feedback = document.getElementById('step5Feedback').value;
+                    break;
+            }
+            
+            // Create structured JSON data for AI model training
+            const structuredData = {
+                // Metadata
+                sessionId: currentExecutionId || `SESSION-${Date.now()}`,
+                timestamp: new Date().toISOString(),
+                step: stepNumber,
+                stepName: getStepName(stepNumber),
+                
+                // Site context (input data)
+                siteContext: {
+                    siteName: appState.siteData.siteName || '',
+                    uwi: appState.siteData.uwi || '',
+                    client: appState.siteData.client || '',
+                    landUse: appState.siteData.landUse || '',
+                    soilType: appState.siteData.soilType || '',
+                    phase1Summary: appState.siteData.phase1Summary || ''
+                },
+                
+                // Generated content (both formats for flexibility)
+                content: {
+                    htmlOutput: outputContent, // Full HTML for display
+                    cleanText: stripHTMLTags(outputContent), // Clean text for AI training
+                    wordCount: stripHTMLTags(outputContent).split(' ').length,
+                    generationMethod: outputContent.includes('AI') ? 'ai' : 'static'
+                },
+                
+                // Quality assessment
+                scores: scores,
+                averageScore: Object.values(scores).reduce((a, b) => a + b, 0) / Object.values(scores).length,
+                feedback: {
+                    text: feedback,
+                    hasImprovement: feedback.toLowerCase().includes('improve') || feedback.toLowerCase().includes('better'),
+                    hasPositive: feedback.toLowerCase().includes('good') || feedback.toLowerCase().includes('excellent')
+                },
+                
+                // Additional context for Step 4 (content generation)
+                ...(stepNumber === 4 && {
+                    contentSections: {
+                        executiveSummary: appState.generatedContent?.executiveSummary ? stripHTMLTags(appState.generatedContent.executiveSummary) : '',
+                        siteDescription: appState.generatedContent?.siteDescription ? stripHTMLTags(appState.generatedContent.siteDescription) : '',
+                        methodology: appState.generatedContent?.methodology ? stripHTMLTags(appState.generatedContent.methodology) : '',
+                        results: appState.generatedContent?.results ? stripHTMLTags(appState.generatedContent.results) : '',
+                        conclusions: appState.generatedContent?.conclusions ? stripHTMLTags(appState.generatedContent.conclusions) : '',
+                        recommendations: appState.generatedContent?.recommendations ? stripHTMLTags(appState.generatedContent.recommendations) : ''
+                    }
+                })
+            };
+            
+            try {
+                // Send structured data to Google Sheets
+                if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') {
+                    const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            type: 'structured_step_data',
+                            data: structuredData
+                        })
+                    });
+                    console.log('Structured data sent to Google Sheets:', structuredData);
+                } else {
+                    console.log('Google Sheets integration not configured. Structured data that would be sent:', structuredData);
+                }
+            } catch (error) {
+                console.error('Error saving structured data to Google Sheets:', error);
+            }
+        }
+        
+        // Save final report to Google Sheets
+        async function saveToGoogleSheets() {
+            // Create structured data for the final report summary
+            const structuredData = {
+                // Metadata
+                sessionId: currentExecutionId || `SESSION-${Date.now()}`,
+                timestamp: new Date().toISOString(),
+                step: 5,
+                stepName: 'Final Report Summary',
+                
+                // Site context
+                siteContext: {
+                    siteName: appState.siteData.siteName || '',
+                    uwi: appState.siteData.uwi || '',
+                    client: appState.siteData.client || '',
+                    landUse: appState.siteData.landUse || '',
+                    soilType: appState.siteData.soilType || '',
+                    phase1Summary: appState.siteData.phase1Summary || ''
+                },
+                
+                // Final report content
+                content: {
+                    htmlOutput: 'Final report generated with all sections',
+                    cleanText: 'Final report generated with all sections',
+                    wordCount: 7,
+                    generationMethod: 'static'
+                },
+                
+                // Final scores
+                scores: {
+                    overallQuality: parseInt(document.getElementById('step5Score1').value),
+                    clientReadiness: parseInt(document.getElementById('step5Score2').value),
+                    regulatoryCompliance: parseInt(document.getElementById('step5Score3').value)
+                },
+                averageScore: calculateAverageScore(),
+                feedback: {
+                    text: document.getElementById('step5Feedback').value,
+                    hasImprovement: document.getElementById('step5Feedback').value.toLowerCase().includes('improve') || document.getElementById('step5Feedback').value.toLowerCase().includes('better'),
+                    hasPositive: document.getElementById('step5Feedback').value.toLowerCase().includes('good') || document.getElementById('step5Feedback').value.toLowerCase().includes('excellent')
+                },
+                
+                // Analysis results summary
+                analysisResults: appState.analysisResults
+            };
+            
+            try {
+                if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            type: 'structured_step_data',
+                            data: structuredData
+                        })
+                    });
+                    
+                    // Show success message
+                    const successMsg = document.createElement('div');
+                    successMsg.className = 'alert alert-success';
+                    successMsg.innerHTML = '<strong>Success!</strong> Report data has been saved to Google Sheets.';
+                    document.getElementById('step5').insertBefore(successMsg, document.getElementById('step5').firstChild);
+                } else {
+                    alert('Google Sheets integration not configured.\n\nTo enable:\n1. Create Google Apps Script in your sheet\n2. Deploy as Web App\n3. Replace GOOGLE_SCRIPT_URL in the code with your Web App URL');
+                    console.log('Data that would be saved:', structuredData);
+                }
+            } catch (error) {
+                console.error('Error saving to Google Sheets:', error);
+                alert('Error saving to Google Sheets. Check console for details.');
+            }
+        }
+        
+        // Calculate average score across all steps
+        function calculateAverageScore() {
+            const allScores = [];
+            
+            // Collect all scores
+            for (let i = 1; i <= 5; i++) {
+                const scoreInputs = document.querySelectorAll(`#step${i}Scoring input[type="range"]`);
+                scoreInputs.forEach(input => {
+                    allScores.push(parseInt(input.value));
+                });
+            }
+            
+            const average = allScores.reduce((a, b) => a + b, 0) / allScores.length;
+            return Math.round(average);
+        }
+
+        // Test Google Sheets connection
+        async function testGoogleSheetsConnection() {
+            console.log('Testing Google Sheets connection...');
+            
+            // Create structured test data matching the expected format
+            const testStructuredData = {
+                sessionId: 'TEST-SESSION-' + Date.now(),
+                timestamp: new Date().toISOString(),
+                step: 0,
+                stepName: 'Connection Test',
+                
+                siteContext: {
+                    siteName: 'TEST-SITE',
+                    uwi: 'TEST-UWI',
+                    client: 'TEST-CLIENT',
+                    landUse: 'test',
+                    soilType: 'test',
+                    phase1Summary: 'Test Phase 1 summary'
+                },
+                
+                content: {
+                    htmlOutput: 'This is a test entry for connection verification',
+                    cleanText: 'This is a test entry for connection verification',
+                    wordCount: 9,
+                    generationMethod: 'test'
+                },
+                
+                scores: {
+                    testScore: 100
+                },
+                averageScore: 100,
+                feedback: {
+                    text: 'Testing Google Sheets integration',
+                    hasImprovement: false,
+                    hasPositive: true
+                }
+            };
+            
+            const testData = {
+                type: 'structured_step_data',
+                data: testStructuredData
+            };
+            
+            console.log('Sending structured test data:', testData);
+            
+            try {
+                // Test with structured data format
+                console.log('Testing with structured data format...');
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                }).then(() => {
+                    console.log('Structured test data sent successfully');
+                }).catch(e => console.log('Structured test failed:', e.message));
+                
+                // Also test legacy format for comparison
+                const legacyTestData = {
+                    timestamp: new Date().toISOString(),
+                    site: 'TEST-SITE-LEGACY',
+                    uwi: 'TEST-UWI-LEGACY',
+                    client: 'TEST-CLIENT-LEGACY',
+                    step: 'Connection Test Legacy',
+                    scoreType: 'test',
+                    scoreValue: 100,
+                    feedback: 'Testing legacy format',
+                    outputContent: 'This is a legacy test entry'
+                };
+                
+                console.log('Testing legacy format...');
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(legacyTestData)
+                }).then(() => {
+                    console.log('Legacy test data sent successfully');
+                }).catch(e => console.log('Legacy test failed:', e.message));
+                
+                alert('Test data sent! Check:\n1. Browser console for logs\n2. Your Google Sheet for new entries in both StructuredData and LegacyData sheets\n3. Apps Script logs (View → Executions)');
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                alert('Test failed! Check console for details.');
+            }
+        }
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Phase 2 ESA Prototype loaded');
+            console.log('Google Script URL:', GOOGLE_SCRIPT_URL);
+            
+            // Check if URL is configured
+            if (GOOGLE_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbyx7M6B1bsFAphGftxRL3TBYLGipcYO-bQrN0hz7UYKzE14lgzqKpYseXvCMXzs6TRS/exec') {
+                console.log('✓ Google Script URL is configured');
+            } else {
+                console.warn('✗ Google Script URL may not be properly configured');
+            }
+        });
+        
+        // Initialize step 1 scores
+        document.getElementById('step1Score1').addEventListener('input', function() {
+            this.nextElementSibling.textContent = this.value;
+        });
+        document.getElementById('step1Score2').addEventListener('input', function() {
+            this.nextElementSibling.textContent = this.value;
+        });
+
+        // Add navigation after scoring
+        document.querySelectorAll('.scoring-section').forEach(section => {
+            const nextButton = document.createElement('button');
+            nextButton.className = 'btn-secondary';
+            nextButton.textContent = 'Save Score & Continue';
+            nextButton.style.marginTop = '10px';
+            nextButton.onclick = function() {
+                const currentStep = parseInt(section.id.replace('step', '').replace('Scoring', ''));
+                if (currentStep < 5) {
+                    goToStep(currentStep + 1);
+                }
+            };
+            section.appendChild(nextButton);
+        });
+    </script>
+</body>
+</html>
