@@ -1166,23 +1166,23 @@ Arsenic: 17-38.9 mg/kg (natural background)</textarea>
                 // Generate content sections with AI (await each one with progress updates)
                 const sections = {};
                 
-                showAIProgressLoading(4, 'Generating Executive Summary... (1/6)');
-                sections.executiveSummary = await generateExecutiveSummary();
-                
-                showAIProgressLoading(4, 'Generating Site Description... (2/6)');
+                showAIProgressLoading(4, 'Generating Site Description... (1/6)');
                 sections.siteDescription = await generateSiteDescription();
                 
-                showAIProgressLoading(4, 'Generating Methodology... (3/6)');
+                showAIProgressLoading(4, 'Generating Methodology... (2/6)');
                 sections.methodology = await generateMethodology();
                 
-                showAIProgressLoading(4, 'Generating Results... (4/6)');
+                showAIProgressLoading(4, 'Generating Results... (3/6)');
                 sections.results = await generateResults();
                 
-                showAIProgressLoading(4, 'Generating Conclusions... (5/6)');
+                showAIProgressLoading(4, 'Generating Conclusions... (4/6)');
                 sections.conclusions = await generateConclusions();
                 
-                showAIProgressLoading(4, 'Generating Recommendations... (6/6)');
+                showAIProgressLoading(4, 'Generating Recommendations... (5/6)');
                 sections.recommendations = await generateRecommendations();
+                
+                showAIProgressLoading(4, 'Generating Executive Summary... (6/6)');
+                sections.executiveSummary = await generateExecutiveSummary(sections);
                 
                 showAIProgressLoading(4, 'Finalizing content...');
                 
@@ -1323,7 +1323,7 @@ Arsenic: 17-38.9 mg/kg (natural background)</textarea>
         }
 
         // Content generation functions (AI-powered)
-        async function generateExecutiveSummary() {
+        async function generateExecutiveSummary(sections = {}) {
             // Static fallback content
             const staticContent = `
                 <p>On behalf of ${appState.siteData.client}, West Earth Sciences Ltd. (West) completed a Phase II Environmental Site Assessment (ESA) at the surface location ${appState.siteData.siteName} related to the well ${appState.siteData.uwi} (the Site) between November 29, 2024 and February 26, 2025. The Site is situated on ${appState.siteData.landUse} land in Sturgeon County, Alberta.</p>
@@ -1344,6 +1344,20 @@ Arsenic: 17-38.9 mg/kg (natural background)</textarea>
             // Enhanced AI generation with feedback
             const systemPrompt = `You are an expert environmental consultant writing Phase II Environmental Site Assessment reports. Generate professional, technically accurate content following Alberta Environmental Site Assessment Standards and CSA Z769-00 guidelines. Use proper environmental consulting language and format as HTML paragraphs and lists.`;
             
+            // Enhanced prompt that can reference other sections
+            const sectionsContext = Object.keys(sections).length > 0 ? `
+
+GENERATED REPORT SECTIONS TO REFERENCE:
+- Site Description: ${sections.siteDescription ? 'Available' : 'Not available'}
+- Methodology: ${sections.methodology ? 'Available' : 'Not available'}
+- Results: ${sections.results ? 'Available' : 'Not available'}
+- Conclusions: ${sections.conclusions ? 'Available' : 'Not available'}
+- Recommendations: ${sections.recommendations ? 'Available' : 'Not available'}
+
+Key findings from other sections:
+${sections.conclusions ? `\nConclusions Summary: ${sections.conclusions.substring(0, 300)}...` : ''}
+${sections.results ? `\nResults Summary: ${sections.results.substring(0, 300)}...` : ''}` : '';
+
             const baseUserPrompt = `Generate an executive summary for a Phase II ESA report with the following details:
 
 Site Information:
@@ -1362,9 +1376,9 @@ Results:
 - AEC 2: Localized PHC F3 impact, volume ${appState.analysisResults.aec2Volume} m³
 - Total impacted area: 180 m²
 - Total impacted volume: ${parseInt(appState.analysisResults.aec1Volume) + parseInt(appState.analysisResults.aec2Volume)} m³
-- Partial delineation achieved
+- Partial delineation achieved${sectionsContext}
 
-Format as HTML with proper paragraphs and lists. Be concise but comprehensive.`;
+IMPORTANT: Since this is an Executive Summary, synthesize the key points from all sections above. Include the most critical findings, conclusions, and recommendations. Format as HTML with proper paragraphs and lists. Be concise but comprehensive.`;
 
             try {
                 // Get feedback-enhanced prompt

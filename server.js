@@ -29,7 +29,7 @@ app.post('/api/ai-generate', async (req, res) => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'gpt-4',
+                    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
                     messages: [
                         ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
                         { role: 'user', content: prompt }
@@ -55,7 +55,7 @@ app.post('/api/ai-generate', async (req, res) => {
                     'anthropic-version': '2023-06-01'
                 },
                 body: JSON.stringify({
-                    model: 'claude-3-sonnet-20240229',
+                    model: process.env.ANTHROPIC_MODEL || 'claude-3-sonnet-20240229',
                     max_tokens: 2000,
                     system: systemPrompt,
                     messages: [{ role: 'user', content: prompt }]
@@ -83,6 +83,8 @@ app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
     console.log('Environment variables loaded:', {
         hasOpenAI: !!process.env.OPENAI_API_KEY,
-        hasAnthropic: !!process.env.ANTHROPIC_API_KEY
+        hasAnthropic: !!process.env.ANTHROPIC_API_KEY,
+        openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+        anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-3-sonnet-20240229'
     });
 });

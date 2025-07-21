@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "dev:clean": "./scripts/dev.sh",
+    "stop": "lsof -ti:3001 | xargs kill -9 2>/dev/null || echo 'No processes found on port 3001'",
+    "restart": "npm run stop && sleep 1 && npm run dev",
     "build": "echo 'No build step required'",
     "test": "echo 'No tests specified'"
   },
